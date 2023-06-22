@@ -1,0 +1,66 @@
+blueprint:
+  name: standby-killer
+  description:
+    This is a blueprint to turn off a smart plug after the power draw has
+    been low for a certain time. It’s useful for devices that draw significant power
+    in standby, like PCs.
+  domain: automation
+  input:
+    power_sensor:
+      name: Power Sensor
+      description:
+        Sensor for power usage to determine if device(s) are 'on' or 'standby'.
+      selector:
+        entity:
+          filter:
+            domain: sensor
+            device_class: power
+          multiple: false
+
+    power_threshold:
+      name: Power Threshold (Watts)
+      description:
+        Power threshold in Watts to determine device state. Power usage above the
+        threshold indicates 'on' and below indicates 'standby'.
+      default: 10
+
+    off_timeout:
+      name: Standby Timeout (Minutes)
+      description:
+        The timeout in minutes after which the device(s) should be turned off. 
+      default: 15
+      selector:
+        number:
+          unit_of_measurement: minutes
+          mode: slider
+          min: 1.0
+          max: 60.0
+          step: 1.0
+
+    smart_plug:
+      name: Smart Plug
+      description:
+        The smart plug that should be turned off after standby is detected for the
+        configured timeout.
+      selector:
+        entity:
+          filter:
+            domain: switch
+            # FIXME: cannot filter for smart plugs or power devices right now =/
+            #device_class: plug
+          multiple: false
+
+  source_url: https://github.com/1wilkens/homeassistant-blueprints/blob/main/standby-killer.yaml
+
+trigger:
+  - below: !input power_threshold
+    entity_id: !input power_sensor
+    for:
+      minutes: !input off_timeout
+    platform: numeric_state
+condition: []
+action:
+  - data:
+      entity_id: !input smart_plug
+    service: switch.turn_off
+mode: single
