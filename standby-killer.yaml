@@ -1,5 +1,6 @@
 blueprint:
-  name: standby-killer
+  name: 1wilkens/standby-killer
+  author: 1wilkens
   description:
     This is a blueprint to turn off a smart plug after the power draw has
     been low for a certain time. It’s useful for devices that draw significant power
