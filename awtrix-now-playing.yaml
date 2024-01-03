@@ -1,0 +1,152 @@
+blueprint:
+  name: 1wilkens/awtrix-now-playing
+  author: 1wilkens
+  description:
+    Shows a notification for currently playing media on a
+    awtrix-light enabled clock by publishing an MQTT
+    message to the <awtrix-topic>/notify endpoint.
+  domain: automation
+  input:
+    awtrix:
+      name: Awtrix-light devices
+      description: Select the Awtrix-light devices
+      selector:
+        device:
+          filter:
+            - integration: mqtt
+              manufacturer: Blueforcer
+              model: AWTRIX Light
+          multiple: true
+    media_player:
+      name: Media player entity
+      description: Select the Media Player to display song metadata from
+      selector:
+        entity:
+          filter:
+            - domain: media_player
+          multiple: false
+
+    icon:
+      name: Icon
+      description: Enter the name or ID of the icon to use in the notification (must be present on the awtrix)
+      selector:
+        text:
+      default: "18207"
+    icon_style:
+      name: Icon style
+      description: Select the icon display style
+      selector:
+        select:
+          options:
+            - label: "Icon doesn't move"
+              value: "0"
+            - label: "Icon moves with text and will not appear again"
+              value: "1"
+            - label: "Icon moves with text but appears again when the text starts"
+              value: "2"
+          mode: dropdown
+      default: "2"
+
+    text_case:
+      name: Text Case
+      description: Select how the text should be formatted
+      selector:
+        select:
+          options:
+            - label: "Use global setting"
+              value: "0"
+            - label: "Force Uppercase"
+              value: "1"
+            - label: "Show as the media player reports it"
+              value: "2"
+          mode: dropdown
+      default: "0"
+    num_repeats:
+      name: Number of repeats
+      description: Select how how often the notification text should be repeated
+      default: "2"
+      selector:
+        text:
+
+    color_text:
+      name: Text Color
+      description: Select the text/foreground color for the notification
+      selector:
+        color_rgb:
+      default: [28, 113, 216]
+    color_bg:
+      name: Background Color
+      description: Select the background color for the notification
+      selector:
+        color_rgb:
+      default: [0, 0, 0]
+    color_rainbow:
+      name: Use Rainbow Colors?
+      description: Should the notification be shown in rainbow colors?
+      selector:
+        boolean:
+      default: false
+
+variables:
+  awtrix_ids: !input awtrix
+  topics: >-
+    {% macro get_topic(device_id) %}
+      {{ states((device_entities(device_id) | select('search','device_topic') | list)[0] | default('unknown')) }}
+    {% endmacro %}
+    {% set ns = namespace(topics=[]) %}
+    {% for id in awtrix_ids %}
+      {% set topic = get_topic(id)|replace(' ','')|replace('\n','') %}
+      {% set ns.topics = ns.topics + [ topic ] %}
+    {% endfor %}
+    {{ ns.topics | reject('match','unavailable|unknown') | list }}
+  media_player: !input media_player
+  all_text: "{{state_attr(media_player, 'media_title')}} - {{state_attr(media_player, 'media_artist')}}"
+
+  icon: !input icon
+  icon_style: !input icon_style
+
+  text_case: !input text_case
+  num_repeats: !input num_repeats
+
+  color_text: !input color_text
+  color_bg: !input color_bg
+  color_rainbow: !input color_rainbow
+
+trigger:
+  - platform: state
+    entity_id: !input media_player
+    attribute: media_title
+    from:
+  - platform: state
+    entity_id: !input media_player
+    from:
+
+condition:
+  - condition: and
+    conditions:
+      - condition: template
+        value_template: "{{ state_attr(media_player, 'media_title') != None }}"
+      - condition: template
+        value_template: "{{ state_attr(media_player, 'media_artist') != None }}"
+
+action:
+  - repeat:
+      for_each: "{{ topics }}"
+      sequence:
+        - service: mqtt.publish
+          data:
+            qos: 0
+            retain: false
+            topic: "{{ repeat.item }}/notify"
+            payload: |-
+              {
+                "text": "{{ all_text }}",
+                "icon": "{{ icon }}",
+                "pushIcon": "{{ icon_style }}",
+                "background": "{{ color_bg }}",
+                "color": "{{ color_text }}",
+                "rainbow": "{{ iif(color_rainbow, 'true', 'false') }}",
+                "repeat": "{{ num_repeats }}"
+                "stack": "false",
+                "textCase": "{{ text_case }}",
+              }
