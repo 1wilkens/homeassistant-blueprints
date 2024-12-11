@@ -113,11 +113,11 @@ variables:
   color_rainbow: !input color_rainbow
 
 trigger:
-  - platform: state
+  - trigger: state
     entity_id: !input media_player
     attribute: media_title
     from:
-  - platform: state
+  - trigger: state
     entity_id: !input media_player
     from:
 
@@ -133,7 +133,7 @@ action:
   - repeat:
       for_each: "{{ topics }}"
       sequence:
-        - service: mqtt.publish
+        - action: mqtt.publish
           data:
             qos: 0
             retain: false
