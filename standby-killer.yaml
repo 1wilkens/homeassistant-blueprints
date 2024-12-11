@@ -58,10 +58,10 @@ trigger:
     entity_id: !input power_sensor
     for:
       minutes: !input off_timeout
-    platform: numeric_state
+    trigger: numeric_state
 condition: []
 action:
   - data:
       entity_id: !input smart_plug
-    service: switch.turn_off
+    action: switch.turn_off
 mode: single
