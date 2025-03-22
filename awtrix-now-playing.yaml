@@ -146,7 +146,7 @@ action:
                 "background": "{{ color_bg }}",
                 "color": "{{ color_text }}",
                 "rainbow": "{{ iif(color_rainbow, 'true', 'false') }}",
-                "repeat": "{{ num_repeats }}"
+                "repeat": "{{ num_repeats }}",
                 "stack": "false",
-                "textCase": "{{ text_case }}",
+                "textCase": "{{ text_case }}"
               }
