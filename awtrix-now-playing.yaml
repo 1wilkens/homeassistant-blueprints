@@ -142,11 +142,11 @@ action:
               {
                 "text": "{{ all_text }}",
                 "icon": "{{ icon }}",
-                "pushIcon": "{{ icon_style }}",
-                "background": "{{ color_bg }}",
-                "color": "{{ color_text }}",
-                "rainbow": "{{ iif(color_rainbow, 'true', 'false') }}",
-                "repeat": "{{ num_repeats }}",
-                "stack": "false",
-                "textCase": "{{ text_case }}"
+                "pushIcon": {{ icon_style }},
+                "background": {{ color_bg }},
+                "color": {{ color_text }},
+                "rainbow": {{ iif(color_rainbow, 'true', 'false') }},
+                "repeat": {{ num_repeats }},
+                "stack": false,
+                "textCase": {{ text_case }}
               }
